@@ -5,22 +5,33 @@
   "main": "dist/core.js",
   "type": "module",
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "dev:liquid": "tsc --watch",
+    "build:liquid": "tsc",
+    "build": "pnpm build:liquid && vite build",
+    "dev": "vite dev",
     "serve": "python3 -m http.server 8080",
     "start": "npm run build && npm run serve",
     "clean": "rm -rf dist"
   },
-  "keywords": ["liquid", "glass", "webgl", "pixijs", "renderer", "fluid", "simulation"],
+  "keywords": [
+    "liquid",
+    "glass",
+    "webgl",
+    "pixijs",
+    "renderer",
+    "fluid",
+    "simulation"
+  ],
   "author": "液态玻璃渲染器",
   "license": "MIT",
   "packageManager": "pnpm@10.12.1",
   "dependencies": {
     "@types/node": "24.0.1",
-    "pixi.js": "8.10.1",
     "typescript": "5.8.3"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "vite": "^6.3.5"
+  },
   "files": [
     "dist/**/*",
     "src/**/*",
