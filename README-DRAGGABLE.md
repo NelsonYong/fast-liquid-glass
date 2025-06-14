@@ -1,15 +1,15 @@
-# Liquid Glass 分离式拖拽架构
+# Liquid Glass Decoupled Drag Architecture
 
-## 概述
+## Overview
 
-从版本 2.0 开始，Liquid Glass 采用了分离式架构，将核心视觉效果和拖拽功能分离：
+Starting from version 2.0, Liquid Glass adopts a decoupled architecture that separates core visual effects from drag functionality:
 
-- **`LiquidGlassCore`**: 负责液体玻璃的视觉效果和渲染
-- **`LiquidGlassDraggable`**: 独立的拖拽工具类，可选择性地为任何 `LiquidGlassCore` 实例添加拖拽功能
+- **`LiquidGlassCore`**: Responsible for liquid glass visual effects and rendering
+- **`LiquidGlassDraggable`**: Independent drag utility class that can optionally add drag functionality to any `LiquidGlassCore` instance
 
-## 基本使用
+## Basic Usage
 
-### 1. 仅视觉效果（不可拖拽）
+### 1. Visual Effects Only (Non-draggable)
 
 ```typescript
 import { LiquidGlassCore } from "./src/core";
@@ -31,7 +31,7 @@ liquidGlass.init();
 liquidGlass.appendTo(document.body);
 ```
 
-### 2. 添加拖拽功能
+### 2. Adding Drag Functionality
 
 ```typescript
 import { LiquidGlassCore } from "./src/core";
@@ -45,90 +45,90 @@ const liquidGlass = new LiquidGlassCore({
 liquidGlass.init();
 liquidGlass.appendTo(document.body);
 
-// 创建拖拽功能
+// Create drag functionality
 const draggable = new LiquidGlassDraggable(liquidGlass, {
   constrainToViewport: true,
-  onDragStart: (position) => console.log("拖拽开始:", position),
-  onDrag: (position) => console.log("拖拽中:", position),
-  onDragEnd: (position) => console.log("拖拽结束:", position),
+  onDragStart: (position) => console.log("Drag started:", position),
+  onDrag: (position) => console.log("Dragging:", position),
+  onDragEnd: (position) => console.log("Drag ended:", position),
 });
 ```
 
-## API 文档
+## API Documentation
 
 ### LiquidGlassCore
 
-#### 公共方法
+#### Public Methods
 
-- `init()`: 初始化液体玻璃效果
-- `appendTo(parent: HTMLElement)`: 将元素添加到指定父容器
-- `setPosition(position: LiquidGlassPosition)`: 设置位置
-- `getPosition()`: 获取当前位置
-- `setSize(size: LiquidGlassSize)`: 设置尺寸
-- `getSize()`: 获取当前尺寸
-- `getContainer()`: 获取 DOM 容器元素
-- `getBounds()`: 获取边界信息
-- `constrainPosition(x, y)`: 约束位置到视口内
-- `updateConfig(config)`: 更新配置
-- `updateEffects(effects)`: 更新视觉效果
-- `destroy()`: 销毁实例
+- `init()`: Initialize liquid glass effect
+- `appendTo(parent: HTMLElement)`: Add element to specified parent container
+- `setPosition(position: LiquidGlassPosition)`: Set position
+- `getPosition()`: Get current position
+- `setSize(size: LiquidGlassSize)`: Set dimensions
+- `getSize()`: Get current dimensions
+- `getContainer()`: Get DOM container element
+- `getBounds()`: Get boundary information
+- `constrainPosition(x, y)`: Constrain position within viewport
+- `updateConfig(config)`: Update configuration
+- `updateEffects(effects)`: Update visual effects
+- `destroy()`: Destroy instance
 
 ### LiquidGlassDraggable
 
-#### 构造函数
+#### Constructor
 
 ```typescript
 new LiquidGlassDraggable(target: LiquidGlassCore, config?: DraggableConfig)
 ```
 
-#### 配置选项 (DraggableConfig)
+#### Configuration Options (DraggableConfig)
 
 ```typescript
 interface DraggableConfig {
-  constrainToViewport?: boolean; // 是否限制在视口内
-  onDragStart?: (position) => void; // 拖拽开始回调
-  onDrag?: (position) => void; // 拖拽中回调
-  onDragEnd?: (position) => void; // 拖拽结束回调
+  constrainToViewport?: boolean; // Whether to restrict within viewport
+  onDragStart?: (position) => void; // Drag start callback
+  onDrag?: (position) => void; // Dragging callback
+  onDragEnd?: (position) => void; // Drag end callback
 }
 ```
 
-#### 公共方法
+#### Public Methods
 
-- `setConfig(config)`: 更新拖拽配置
-- `isDragginActive()`: 检查是否正在拖拽
-- `destroy()`: 销毁拖拽功能
+- `setConfig(config)`: Update drag configuration
+- `isDragginActive()`: Check if currently dragging
+- `destroy()`: Destroy drag functionality
 
-## 高级用法示例
+## Advanced Usage Examples
 
-### 1. 自定义拖拽行为
+### 1. Custom Drag Behavior
 
 ```typescript
 const draggable = new LiquidGlassDraggable(liquidGlass, {
   constrainToViewport: false,
   onDragStart: (position) => {
-    // 拖拽开始时改变透明度
+    // Change opacity when drag starts
     const container = liquidGlass.getContainer();
     if (container) container.style.opacity = "0.8";
   },
   onDrag: (position) => {
-    // 拖拽过程中动态调整效果
+    // Dynamically adjust effects during dragging
     liquidGlass.updateEffects({
       blurAmount: Math.max(0.1, 0.5 - Math.abs(position.x - 200) / 1000),
       saturation: 1.0 + Math.abs(position.y - 300) / 500,
     });
   },
   onDragEnd: (position) => {
-    // 拖拽结束时恢复透明度
+    // Restore opacity when drag ends
     const container = liquidGlass.getContainer();
     if (container) container.style.opacity = "1";
   },
 });
 ```
 
-### 2. 程序化位置控制
+### 2. Programmatic Position Control
 
 ```typescript
-// 圆形路径动画
+// Circular path animation
 let angle = 0;
 const centerX = window.innerWidth / 2;
 const centerY = window.innerHeight / 2;
@@ -141,7 +141,7 @@ const animate = () => {
 
   liquidGlass.setPosition({ x, y });
 
-  // 根据位置动态调整效果
+  // Dynamically adjust effects based on position
   const normalizedAngle = (angle % (Math.PI * 2)) / (Math.PI * 2);
   liquidGlass.updateEffects({
     chromaticAberration: normalizedAngle * 2,
@@ -154,7 +154,7 @@ const animate = () => {
 animate();
 ```
 
-### 3. 多实例协同
+### 3. Multi-instance Cooperation
 
 ```typescript
 const instances = [];
@@ -170,7 +170,7 @@ for (let i = 0; i < 3; i++) {
 
   const draggable = new LiquidGlassDraggable(liquidGlass, {
     onDrag: (position) => {
-      // 当一个实例被拖拽时，其他实例产生反应
+      // When one instance is dragged, others react
       instances.forEach((other) => {
         if (other.liquidGlass !== liquidGlass) {
           const otherPos = other.liquidGlass.getPosition();
@@ -193,48 +193,222 @@ for (let i = 0; i < 3; i++) {
 }
 ```
 
-## 移动端支持
+## Mobile Support
 
-`LiquidGlassDraggable` 自动支持触摸事件，无需额外配置：
+`LiquidGlassDraggable` automatically supports touch events without additional configuration:
 
 - `touchstart` → `mousedown`
 - `touchmove` → `mousemove`
 - `touchend` → `mouseup`
 
-## 性能优化建议
+## Performance Optimization
 
-1. **按需创建拖拽功能**: 只为需要拖拽的实例创建 `LiquidGlassDraggable`
-2. **及时销毁**: 不再需要时调用 `destroy()` 方法
-3. **限制回调频率**: 在 `onDrag` 回调中避免高频操作
-4. **使用约束**: 启用 `constrainToViewport` 可以避免不必要的位置计算
+### Best Practices
 
-## 迁移指南
+1. **Throttle drag events**: For complex calculations during dragging
+2. **Use `requestAnimationFrame`**: For smooth animations
+3. **Batch updates**: Avoid frequent individual property updates
+4. **Cleanup**: Always call `destroy()` when removing instances
 
-从旧版本迁移到分离式架构：
+### Example: Optimized Multi-instance
 
-### 旧版本
+```typescript
+// Throttle function
+function throttle(func, limit) {
+  let inThrottle;
+  return function () {
+    const args = arguments;
+    const context = this;
+    if (!inThrottle) {
+      func.apply(context, args);
+      inThrottle = true;
+      setTimeout(() => (inThrottle = false), limit);
+    }
+  };
+}
+
+// Optimized drag handling
+const throttledDragHandler = throttle((position) => {
+  // Batch all effect updates
+  const updates = [];
+
+  instances.forEach((other) => {
+    if (other.liquidGlass !== currentInstance) {
+      const distance = calculateDistance(position, other.position);
+      const influence = calculateInfluence(distance);
+
+      updates.push({
+        instance: other.liquidGlass,
+        effects: {
+          displacementScale: 1.0 + influence * 0.5,
+          blurAmount: 0.2 + influence * 0.3,
+        },
+      });
+    }
+  });
+
+  // Apply all updates in a single frame
+  requestAnimationFrame(() => {
+    updates.forEach((update) => {
+      update.instance.updateEffects(update.effects);
+    });
+  });
+}, 16); // ~60fps
+```
+
+## Integration Examples
+
+### React Component
+
+```tsx
+import React, { useEffect, useRef } from "react";
+import { LiquidGlassCore } from "./src/core";
+import { LiquidGlassDraggable } from "./src/draggable";
+
+const LiquidGlassComponent: React.FC<{
+  size?: { width: number; height: number };
+  position?: { x: number; y: number };
+  draggable?: boolean;
+}> = ({ size, position, draggable = true }) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const liquidGlassRef = useRef<LiquidGlassCore | null>(null);
+  const draggableRef = useRef<LiquidGlassDraggable | null>(null);
+
+  useEffect(() => {
+    if (containerRef.current) {
+      const liquidGlass = new LiquidGlassCore({
+        size: size || { width: 300, height: 200 },
+        position: position || { x: 0, y: 0 },
+      });
+
+      liquidGlass.init();
+      liquidGlass.appendTo(containerRef.current);
+      liquidGlassRef.current = liquidGlass;
+
+      if (draggable) {
+        const draggableInstance = new LiquidGlassDraggable(liquidGlass, {
+          constrainToViewport: true,
+        });
+        draggableRef.current = draggableInstance;
+      }
+
+      return () => {
+        draggableRef.current?.destroy();
+        liquidGlassRef.current?.destroy();
+      };
+    }
+  }, [size, position, draggable]);
+
+  return <div ref={containerRef} />;
+};
+```
+
+### Vue Component
+
+```vue
+<template>
+  <div ref="container"></div>
+</template>
+
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from "vue";
+import { LiquidGlassCore } from "./src/core";
+import { LiquidGlassDraggable } from "./src/draggable";
+
+interface Props {
+  size?: { width: number; height: number };
+  position?: { x: number; y: number };
+  draggable?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  draggable: true,
+});
+
+const container = ref<HTMLDivElement>();
+let liquidGlass: LiquidGlassCore | null = null;
+let draggableInstance: LiquidGlassDraggable | null = null;
+
+onMounted(() => {
+  if (container.value) {
+    liquidGlass = new LiquidGlassCore({
+      size: props.size || { width: 300, height: 200 },
+      position: props.position || { x: 0, y: 0 },
+    });
+
+    liquidGlass.init();
+    liquidGlass.appendTo(container.value);
+
+    if (props.draggable) {
+      draggableInstance = new LiquidGlassDraggable(liquidGlass, {
+        constrainToViewport: true,
+      });
+    }
+  }
+});
+
+onUnmounted(() => {
+  draggableInstance?.destroy();
+  liquidGlass?.destroy();
+});
+</script>
+```
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Performance degradation with multiple instances**
+
+   - Solution: Use throttled event handlers and batch updates
+
+2. **Memory leaks**
+
+   - Solution: Always call `destroy()` methods when removing instances
+
+3. **Touch events not working on mobile**
+
+   - Solution: Ensure `touch-action: none` CSS property is set on draggable elements
+
+4. **Viewport constraint issues**
+   - Solution: Check that parent container has proper positioning context
+
+### Debug Mode
+
+Enable debug logging by setting:
+
+```typescript
+window.LIQUID_GLASS_DEBUG = true;
+```
+
+This will log drag events, position updates, and performance metrics to the console.
+
+## Migration Guide
+
+### From v1.x to v2.x
+
+1. **Separate imports**: Import `LiquidGlassCore` and `LiquidGlassDraggable` separately
+2. **Manual drag setup**: Drag functionality is no longer automatic - create `LiquidGlassDraggable` instance manually
+3. **Configuration changes**: Some configuration options have moved to the draggable class
+
+#### Before (v1.x)
 
 ```typescript
 const liquidGlass = new LiquidGlass({
   draggable: true,
-  // ... other config
+  onDragStart: handler,
 });
 ```
 
-### 新版本
+#### After (v2.x)
 
 ```typescript
-const liquidGlass = new LiquidGlassCore({
-  // ... config (移除 draggable 属性)
+const liquidGlass = new LiquidGlassCore();
+const draggable = new LiquidGlassDraggable(liquidGlass, {
+  onDragStart: handler,
 });
-
-// 如果需要拖拽功能
-const draggable = new LiquidGlassDraggable(liquidGlass);
 ```
 
-## 优势
+## License
 
-1. **更小的包体积**: 不需要拖拽功能时可以避免引入拖拽代码
-2. **更好的灵活性**: 可以自定义拖拽行为，或使用其他拖拽库
-3. **更清晰的职责分离**: 视觉效果和交互逻辑完全分离
-4. **更好的可测试性**: 可以独立测试视觉效果和拖拽功能
+MIT License

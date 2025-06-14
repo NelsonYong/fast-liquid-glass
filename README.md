@@ -1,77 +1,77 @@
 # Liquid Glass Core
 
-一个高度可配置的液体玻璃效果 TypeScript 库，支持自定义样式、SVG 滤镜配置和交互行为。
+A highly configurable liquid glass effect TypeScript library that supports custom styles, SVG filter configurations, and interactive behaviors.
 
-## 特性
+## Features
 
-- 🎨 **高度可配置**: 支持样式、位置、大小、SVG 滤镜等各种配置
-- 🖱️ **交互支持**: 可拖拽、鼠标响应的液体玻璃效果
-- 📱 **响应式**: 自动适应视口约束
-- 🔧 **TypeScript**: 完整的类型支持
-- 🎯 **多实例**: 支持创建多个独立的液体玻璃实例
-- 🔄 **动态更新**: 运行时动态更新配置
+- 🎨 **Highly Configurable**: Supports various configurations for styles, position, size, SVG filters, etc.
+- 🖱️ **Interactive Support**: Draggable, mouse-responsive liquid glass effects
+- 📱 **Responsive**: Automatically adapts to viewport constraints
+- 🔧 **TypeScript**: Full type support
+- 🎯 **Multi-instance**: Supports creating multiple independent liquid glass instances
+- 🔄 **Dynamic Updates**: Dynamically update configurations at runtime
 
-## 安装
+## Installation
 
 ```bash
 npm install liquid-glass-core
 ```
 
-## 基本使用
+## Basic Usage
 
 ```typescript
 import { LiquidGlassCore } from "liquid-glass-core";
 
-// 创建基础液体玻璃效果
+// Create basic liquid glass effect
 const liquidGlass = new LiquidGlassCore();
 liquidGlass.init();
 liquidGlass.appendTo(document.body);
 ```
 
-## 配置接口
+## Configuration Interface
 
 ### LiquidGlassConfig
 
 ```typescript
 interface LiquidGlassConfig {
-  size?: LiquidGlassSize; // 大小配置
-  position?: LiquidGlassPosition; // 位置配置
-  offset?: number; // 视口边界偏移
-  canvasDPI?: number; // Canvas DPI 设置
-  draggable?: boolean; // 是否可拖拽
-  constrainToViewport?: boolean; // 是否约束在视口内
-  style?: LiquidGlassStyleConfig; // 样式配置
-  svg?: LiquidGlassSVGConfig; // SVG 滤镜配置
-  fragment?: FragmentShader; // 自定义片段着色器
+  size?: LiquidGlassSize; // Size configuration
+  position?: LiquidGlassPosition; // Position configuration
+  offset?: number; // Viewport boundary offset
+  canvasDPI?: number; // Canvas DPI setting
+  draggable?: boolean; // Whether draggable
+  constrainToViewport?: boolean; // Whether constrained to viewport
+  style?: LiquidGlassStyleConfig; // Style configuration
+  svg?: LiquidGlassSVGConfig; // SVG filter configuration
+  fragment?: FragmentShader; // Custom fragment shader
 }
 ```
 
-### 样式配置 (LiquidGlassStyleConfig)
+### Style Configuration (LiquidGlassStyleConfig)
 
 ```typescript
 interface LiquidGlassStyleConfig {
-  borderRadius: string; // 边框圆角
-  boxShadow: string; // 盒子阴影
-  backdropFilter: string; // 背景滤镜
-  cursor: string; // 鼠标指针样式
-  zIndex: number; // 层级
+  borderRadius: string; // Border radius
+  boxShadow: string; // Box shadow
+  backdropFilter: string; // Backdrop filter
+  cursor: string; // Mouse cursor style
+  zIndex: number; // Z-index
 }
 ```
 
-### SVG 滤镜配置 (LiquidGlassSVGConfig)
+### SVG Filter Configuration (LiquidGlassSVGConfig)
 
 ```typescript
 interface LiquidGlassSVGConfig {
-  filterUnits: string; // 滤镜单位
-  colorInterpolationFilters: string; // 颜色插值
-  xChannelSelector: string; // X 通道选择器
-  yChannelSelector: string; // Y 通道选择器
+  filterUnits: string; // Filter units
+  colorInterpolationFilters: string; // Color interpolation
+  xChannelSelector: string; // X channel selector
+  yChannelSelector: string; // Y channel selector
 }
 ```
 
-## 高级用法
+## Advanced Usage
 
-### 自定义配置
+### Custom Configuration
 
 ```typescript
 import { LiquidGlassCore, LiquidGlassConfig } from "liquid-glass-core";
@@ -101,7 +101,7 @@ liquidGlass.init();
 liquidGlass.appendTo(document.body);
 ```
 
-### 自定义片段着色器
+### Custom Fragment Shader
 
 ```typescript
 const config: LiquidGlassConfig = {
@@ -109,7 +109,7 @@ const config: LiquidGlassConfig = {
     const ix = uv.x - 0.5;
     const iy = uv.y - 0.5;
 
-    // 使用鼠标位置影响变形
+    // Use mouse position to influence deformation
     const mouseInfluence = 0.1;
     const distFromMouse = LiquidGlassCore.vectorLength(
       ix - (mouse.x - 0.5),
@@ -137,20 +137,20 @@ const config: LiquidGlassConfig = {
 };
 ```
 
-### 动态更新
+### Dynamic Updates
 
 ```typescript
 const liquidGlass = new LiquidGlassCore();
 liquidGlass.init();
 liquidGlass.appendTo(document.body);
 
-// 更新位置
+// Update position
 liquidGlass.setPosition({ x: 400, y: 300 });
 
-// 更新大小
+// Update size
 liquidGlass.setSize({ width: 350, height: 250 });
 
-// 更新完整配置
+// Update complete configuration
 liquidGlass.updateConfig({
   style: {
     borderRadius: "50px",
@@ -162,33 +162,33 @@ liquidGlass.updateConfig({
 });
 ```
 
-## API 参考
+## API Reference
 
-### 类方法
+### Class Methods
 
-#### 构造函数
+#### Constructor
 
 ```typescript
 constructor(userConfig?: LiquidGlassConfig)
 ```
 
-#### 初始化和控制
+#### Initialization and Control
 
 ```typescript
-init(): void                                    // 初始化组件
-appendTo(parent: HTMLElement): void             // 添加到父元素
-destroy(): void                                 // 销毁组件
+init(): void                                    // Initialize component
+appendTo(parent: HTMLElement): void             // Add to parent element
+destroy(): void                                 // Destroy component
 ```
 
-#### 动态更新
+#### Dynamic Updates
 
 ```typescript
-setPosition(position: LiquidGlassPosition): void  // 设置位置
-setSize(size: LiquidGlassSize): void             // 设置大小
-updateConfig(newConfig: Partial<LiquidGlassConfig>): void // 更新配置
+setPosition(position: LiquidGlassPosition): void  // Set position
+setSize(size: LiquidGlassSize): void             // Set size
+updateConfig(newConfig: Partial<LiquidGlassConfig>): void // Update configuration
 ```
 
-### 静态工具函数
+### Static Utility Functions
 
 ```typescript
 LiquidGlassCore.smoothStep(a: number, b: number, t: number): number
@@ -197,7 +197,7 @@ LiquidGlassCore.roundedRectSDF(x: number, y: number, width: number, height: numb
 LiquidGlassCore.texture(x: number, y: number): TextureResult
 ```
 
-## 默认配置
+## Default Configuration
 
 ```typescript
 const DEFAULT_CONFIG = {
@@ -227,20 +227,20 @@ const DEFAULT_CONFIG = {
 };
 ```
 
-## 浏览器兼容性
+## Browser Compatibility
 
 - Chrome 51+
 - Firefox 53+
 - Safari 9.1+
 - Edge 79+
 
-需要支持以下特性：
+Requires support for the following features:
 
 - CSS `backdrop-filter`
 - SVG filters
 - Canvas 2D API
 - ES6 Proxy
 
-## 许可证
+## License
 
 MIT License
