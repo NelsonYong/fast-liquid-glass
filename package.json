@@ -1,0 +1,29 @@
+{
+  "name": "fast-liquid-glass",
+  "version": "1.0.0",
+  "description": "高级液态玻璃渲染器，基于PIXI.js实现",
+  "main": "dist/core.js",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "serve": "python3 -m http.server 8080",
+    "start": "npm run build && npm run serve",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["liquid", "glass", "webgl", "pixijs", "renderer", "fluid", "simulation"],
+  "author": "液态玻璃渲染器",
+  "license": "MIT",
+  "packageManager": "pnpm@10.12.1",
+  "dependencies": {
+    "@types/node": "24.0.1",
+    "pixi.js": "8.10.1",
+    "typescript": "5.8.3"
+  },
+  "devDependencies": {},
+  "files": [
+    "dist/**/*",
+    "src/**/*",
+    "example/**/*"
+  ]
+}

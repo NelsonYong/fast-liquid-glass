@@ -1,0 +1,1807 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Liquid Glass - Decoupled Drag Architecture Example</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #000000;
+      background-image:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.3), transparent),
+        radial-gradient(ellipse 80% 70% at 90% 40%, rgba(204, 171, 238, 0.15), transparent),
+        radial-gradient(ellipse 100% 60% at 70% 30%, rgba(148, 163, 184, 0.1), transparent);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Image gallery styles */
+    .image-gallery {
+      position: relative;
+      z-index: 1;
+      padding: 200px 0 100px;
+      margin-top: 100vh;
+    }
+
+    .gallery-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    .gallery-title {
+      text-align: center;
+      margin-bottom: 60px;
+    }
+
+    .gallery-title h2 {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: #ffffff;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #ffffff 0%, #e2e8f0 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .gallery-title p {
+      font-size: 1.1rem;
+      color: #94a3b8;
+      opacity: 0.8;
+    }
+
+    .image-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 40px;
+      align-items: start;
+    }
+
+    .image-item {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      group: image-item;
+    }
+
+    .image-item:hover {
+      transform: translateY(-8px);
+      border-color: rgba(255, 255, 255, 0.2);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .image-item img {
+      width: 100%;
+      height: 250px;
+      object-fit: cover;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .image-item:hover img {
+      transform: scale(1.05);
+    }
+
+    /* Loading and error states */
+    .image-loading,
+    .image-error {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: #ffffff;
+      z-index: 2;
+    }
+
+    .loading-spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(255, 255, 255, 0.3);
+      border-top: 3px solid #ffffff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 12px;
+    }
+
+    @keyframes spin {
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+
+    .loading-text,
+    .error-text {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      margin-bottom: 8px;
+    }
+
+    .error-icon {
+      font-size: 2rem;
+      margin-bottom: 12px;
+    }
+
+    .retry-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      transition: all 0.2s ease;
+    }
+
+    .retry-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .image-overlay {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+      padding: 30px 20px 20px;
+      transform: translateY(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .image-item:hover .image-overlay {
+      transform: translateY(0);
+    }
+
+    .image-title {
+      color: #ffffff;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+
+    .image-description {
+      color: #cbd5e1;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    /* Special layouts for different grid positions */
+    .image-item:nth-child(1) {
+      grid-column: span 2;
+    }
+
+    .image-item:nth-child(1) img {
+      height: 300px;
+    }
+
+    .image-item:nth-child(4) {
+      grid-column: span 2;
+    }
+
+    .image-item:nth-child(4) img {
+      height: 280px;
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .image-gallery {
+        padding: 100px 0 50px;
+        margin-top: 100vh;
+      }
+
+      .gallery-title h2 {
+        font-size: 2rem;
+      }
+
+      .image-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+      }
+
+      .image-item:nth-child(1),
+      .image-item:nth-child(4) {
+        grid-column: span 1;
+      }
+
+      .image-item:nth-child(1) img,
+      .image-item:nth-child(4) img {
+        height: 250px;
+      }
+    }
+
+    /* Scroll indicator */
+    .scroll-indicator {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 1000;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      text-align: center;
+      animation: bounce 2s infinite;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      padding: 10px;
+      border-radius: 8px;
+      backdrop-filter: blur(10px);
+    }
+
+    .scroll-indicator:hover {
+      color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(-50%) scale(1.05);
+    }
+
+    .scroll-indicator::before {
+      content: '↓';
+      display: block;
+      font-size: 1.5rem;
+      margin-bottom: 8px;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      20%,
+      50%,
+      80%,
+      100% {
+        transform: translateX(-50%) translateY(0);
+      }
+
+      40% {
+        transform: translateX(-50%) translateY(-10px);
+      }
+
+      60% {
+        transform: translateX(-50%) translateY(-5px);
+      }
+    }
+
+    .background-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image:
+        radial-gradient(circle at 25% 25%, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+        radial-gradient(circle at 75% 75%, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .content-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      color: white;
+      z-index: 2;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .content-text h1 {
+      font-size: 4rem;
+      font-weight: 800;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-shadow: none;
+    }
+
+    .content-text p {
+      font-size: 1.5rem;
+      color: #e2e8f0;
+      opacity: 0.9;
+      font-weight: 400;
+      text-shadow: none;
+    }
+
+    .controls {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 24px;
+      border-radius: 12px;
+      backdrop-filter: blur(16px);
+      color: white;
+      max-width: 320px;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      overflow: hidden;
+    }
+
+    .controls.minimized {
+      max-width: 60px;
+      padding: 16px;
+    }
+
+    .controls.minimized .control-content {
+      opacity: 0;
+      transform: translateY(-10px);
+      pointer-events: none;
+      height: 0;
+      overflow: hidden;
+    }
+
+    .controls.minimized .controls-header {
+      margin-bottom: 0;
+      justify-content: center;
+    }
+
+    /* Smooth transitions for content visibility */
+    .control-content {
+      transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-header {
+      transition: margin-bottom 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        justify-content 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .controls-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+    }
+
+    .controls h3 {
+      margin: 0;
+      color: #ffffff;
+      font-size: 1.125rem;
+      font-weight: 600;
+      flex: 1;
+      text-align: center;
+    }
+
+    .minimize-btn {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      width: 28px;
+      height: 28px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+      flex-shrink: 0;
+    }
+
+    .minimize-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .control-content {
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Minimized state styles */
+    .controls.minimized h3 {
+      display: none;
+    }
+
+    .controls.minimized .minimize-btn {
+      margin: 0 auto;
+    }
+
+    .control-group {
+      margin-bottom: 15px;
+    }
+
+    .control-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .control-group button {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      margin-right: 8px;
+      margin-bottom: 8px;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Primary action buttons (white background, black text) */
+    .control-group button.primary {
+      background: #ffffff;
+      color: #000000;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      font-weight: 600;
+    }
+
+    /* Danger buttons */
+    .control-group button.danger {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    /* Button text styling improvements */
+    .control-group button {
+      letter-spacing: 0.025em;
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    /* Subtle animation for button interactions */
+    .control-group button::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      transition: left 0.5s;
+    }
+
+    .control-group button:hover::before {
+      left: 100%;
+    }
+
+    .control-group button.primary::before {
+      background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.05), transparent);
+    }
+
+    .control-group button:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .control-group button.primary:hover {
+      background: #f8f9fa;
+      color: #000000;
+      border-color: rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .control-group button.danger:hover {
+      background: rgba(239, 68, 68, 0.15);
+      border-color: rgba(239, 68, 68, 0.3);
+      box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+    }
+
+    .control-group button:active {
+      transform: translateY(0);
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .control-group button:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+
+    .control-group button.primary:focus {
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .control-group input[type="range"] {
+      width: 100%;
+      margin-bottom: 5px;
+    }
+
+    .info {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(16px);
+      color: white;
+      max-width: 280px;
+      font-size: 0.875rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .info h4 {
+      color: #ffffff;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .info kbd {
+      background: rgba(255, 255, 255, 0.2);
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 0.8rem;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .performance-monitor {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 10000;
+      background: rgba(0, 0, 0, 0.95);
+      padding: 20px;
+      border-radius: 12px;
+      backdrop-filter: blur(16px);
+      color: white;
+      min-width: 220px;
+      font-size: 0.875rem;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .performance-monitor h4 {
+      color: #ffffff;
+      margin-bottom: 12px;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .performance-monitor span {
+      color: #667eea;
+      font-weight: 600;
+    }
+
+    /* Drag state styles - fixing ghost/duplicated effects */
+    .liquid-glass-dragging {
+      /* Use will-change to hint browser optimization for rendering */
+      will-change: transform, opacity;
+
+      /* Create new stacking context to avoid backdrop-filter ghosting */
+      isolation: isolate;
+
+      /* Subtle visual feedback, avoiding excessive transforms */
+      filter: brightness(1.1) !important;
+
+      /* Ensure smooth transition during drag */
+      transition: filter 0.1s ease-out !important;
+    }
+
+    /* Prevent selection and context menu during drag */
+    .liquid-glass-dragging * {
+      user-select: none !important;
+      pointer-events: none !important;
+    }
+
+    /* Custom drag feedback styles */
+    .custom-drag-feedback {
+      will-change: transform, filter;
+      isolation: isolate;
+      transform: scale(1.03) !important;
+      filter: brightness(1.15) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) !important;
+      transition: transform 0.15s ease-out, filter 0.15s ease-out !important;
+    }
+
+    /* Multi-instance drag feedback styles */
+    .multi-instance-drag {
+      will-change: transform, filter;
+      isolation: isolate;
+      transform: scale(1.01) !important;
+      filter: brightness(1.08) !important;
+      z-index: 10000 !important;
+      transition: transform 0.1s ease-out, filter 0.1s ease-out !important;
+    }
+
+    /* Liquid glass container base optimization */
+    .liquid-glass-container {
+      /* Enable hardware acceleration */
+      transform: translateZ(0);
+
+      /* Optimize rendering performance */
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+
+      /* Prevent child elements from affecting backdrop-filter */
+      isolation: isolate;
+
+      /* Optimize repaint performance */
+      contain: layout style paint;
+    }
+
+    /* Prevent text selection during drag */
+    .liquid-glass-container.liquid-glass-dragging {
+      user-select: none;
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+    }
+
+    .floating-text {
+      position: absolute;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 1.2rem;
+      pointer-events: none;
+      z-index: 2;
+      animation: float 6s ease-in-out infinite;
+      font-weight: 500;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0px);
+      }
+
+      50% {
+        transform: translateY(-20px);
+      }
+    }
+
+    .floating-text:nth-child(1) {
+      top: 20%;
+      left: 15%;
+      animation-delay: 0s;
+    }
+
+    .floating-text:nth-child(2) {
+      top: 60%;
+      right: 15%;
+      animation-delay: 2s;
+    }
+
+    .floating-text:nth-child(3) {
+      bottom: 30%;
+      left: 20%;
+      animation-delay: 4s;
+    }
+
+    .floating-text:nth-child(4) {
+      top: 30%;
+      right: 25%;
+      animation-delay: 1s;
+    }
+
+    .effects-panel {
+      position: fixed;
+      top: 50%;
+      left: 80%;
+      transform: translate(-50%, -50%);
+      z-index: 10001;
+      background: rgba(0, 0, 0, 0.98);
+      padding: 32px;
+      border-radius: 16px;
+      backdrop-filter: blur(24px);
+      color: white;
+      min-width: 420px;
+      max-width: 90vw;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      display: none;
+    }
+
+    .effects-panel h3 {
+      margin-bottom: 24px;
+      color: #ffffff;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+
+    .effect-control {
+      margin-bottom: 20px;
+    }
+
+    .effect-control label {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 0.9rem;
+      color: #ccc;
+    }
+
+    .effect-control input[type="range"] {
+      width: 100%;
+      margin-bottom: 5px;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 3px;
+      outline: none;
+      -webkit-appearance: none;
+    }
+
+    .effect-control input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+      border: 2px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .effect-control input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      cursor: pointer;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.4);
+    }
+
+    .effect-control span {
+      float: right;
+      background: rgba(102, 126, 234, 0.2);
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      color: #667eea;
+      font-weight: 600;
+      border: 1px solid rgba(102, 126, 234, 0.3);
+    }
+
+    .effect-actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 25px;
+      justify-content: center;
+    }
+
+    .effect-actions button {
+      background: #ffffff;
+      border: 1px solid rgba(0, 0, 0, 0.1);
+      color: #000000;
+      padding: 12px 24px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 600;
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .effect-actions button:last-child {
+      background: rgba(255, 255, 255, 0.05);
+      color: #ffffff;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+    }
+
+    .effect-actions button:hover {
+      transform: translateY(-1px);
+      background: #f8f9fa;
+      border-color: rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    .effect-actions button:last-child:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.3);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    }
+
+    .effect-actions button:active {
+      transform: translateY(0);
+      transition: all 0.1s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .effect-actions button:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .effect-actions button:last-child:focus {
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2);
+    }
+
+    @media (max-width: 768px) {
+      .controls {
+        position: relative;
+        margin: 20px;
+        max-width: none;
+      }
+
+      .info {
+        position: relative;
+        margin: 20px;
+        max-width: none;
+      }
+
+      .content-text h1 {
+        font-size: 2.5rem;
+      }
+
+      .content-text p {
+        font-size: 1.2rem;
+      }
+
+      .floating-text {
+        display: none;
+      }
+
+      .effects-panel {
+        min-width: 300px;
+        padding: 20px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <!-- Background pattern -->
+  <div class="background-pattern"></div>
+
+  <!-- Floating text -->
+  <div class="floating-text">✨ Liquid Glass</div>
+  <div class="floating-text">🌊 Dynamic</div>
+  <div class="floating-text">🔮 Interactive</div>
+  <div class="floating-text">💎 Beautiful</div>
+
+  <!-- Main content -->
+  <div class="content-text">
+    <h1>Fast Liquid Glass</h1>
+    <p>Decoupled Architecture · Flexible Dragging · Visual Effects</p>
+  </div>
+
+  <!-- Control panel -->
+  <div class="controls" id="controlPanel">
+    <div class="controls-header">
+      <h3>🎛️ Control Panel</h3>
+      <button class="minimize-btn" onclick="toggleControlPanel()" title="Minimize/Maximize">
+        <span id="minimizeIcon">−</span>
+      </button>
+    </div>
+
+    <div class="control-content">
+      <div class="control-group">
+        <label>Preset Effects</label>
+        <button class="primary" onclick="createBasic()">Basic Effect</button>
+        <button onclick="createCustom()">Custom Effect</button>
+        <button onclick="createMultiple()">Multiple Instances</button>
+        <button onclick="createProgrammatic()">Programmatic Control</button>
+      </div>
+
+      <div class="control-group">
+        <label>Size Adjustment</label>
+        <button onclick="changeSize('small')">Small</button>
+        <button onclick="changeSize('medium')">Medium</button>
+        <button onclick="changeSize('large')">Large</button>
+      </div>
+
+      <!-- <div class="control-group">
+        <label>Style Themes</label>
+        <button onclick="changeTheme('glass')">Glass</button>
+        <button onclick="changeTheme('neon')">Neon</button>
+        <button onclick="changeTheme('fire')">Fire</button>
+        <button onclick="changeTheme('ice')">Ice</button>
+      </div> -->
+
+      <div class="control-group">
+        <label>Animation Effects</label>
+        <button onclick="animatePosition()">Position Animation</button>
+        <button onclick="animateSize()">Size Animation</button>
+      </div>
+
+      <div class="control-group">
+        <label>Advanced Effects</label>
+        <button class="primary" onclick="showEffectControls()">Effect Controls</button>
+      </div>
+
+      <div class="control-group">
+        <label>Actions</label>
+        <button class="danger" onclick="clearAll()">Clear All</button>
+        <button onclick="togglePerformanceMonitor()">Performance Monitor</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Advanced effects control panel -->
+  <div class="effects-panel" id="effectsPanel">
+    <h3>🎚️ Advanced Effect Controls</h3>
+
+    <div class="effect-control">
+      <label>Displacement Intensity (Displacement Scale)</label>
+      <input type="range" id="displacementScale" min="0.1" max="5.0" step="0.1" value="1.0"
+        oninput="updateEffect('displacementScale', this.value)">
+      <span id="displacementScaleValue">1.0</span>
+    </div>
+
+    <div class="effect-control">
+      <label>Blur Amount (Blur Amount)</label>
+      <input type="range" id="blurAmount" min="0.1" max="3.0" step="0.1" value="0.25"
+        oninput="updateEffect('blurAmount', this.value)">
+      <span id="blurAmountValue">0.25</span>
+    </div>
+
+    <div class="effect-control">
+      <label>Saturation (Saturation)</label>
+      <input type="range" id="saturation" min="0.1" max="3.0" step="0.1" value="1.1"
+        oninput="updateEffect('saturation', this.value)">
+      <span id="saturationValue">1.1</span>
+    </div>
+
+    <div class="effect-control">
+      <label>Chromatic Aberration (Chromatic Aberration)</label>
+      <input type="range" id="chromaticAberration" min="0.0" max="2.0" step="0.1" value="0.0"
+        oninput="updateEffect('chromaticAberration', this.value)">
+      <span id="chromaticAberrationValue">0.0</span>
+    </div>
+
+    <div class="effect-control">
+      <label>Elasticity Factor (Elasticity)</label>
+      <input type="range" id="elasticity" min="0.1" max="2.0" step="0.1" value="1.0"
+        oninput="updateEffect('elasticity', this.value)">
+      <span id="elasticityValue">1.0</span>
+    </div>
+
+    <div class="effect-control">
+      <label>Corner Radius (Corner Radius)</label>
+      <input type="range" id="cornerRadius" min="0" max="200" step="5" value="150"
+        oninput="updateEffect('cornerRadius', this.value)">
+      <span id="cornerRadiusValue">150</span>
+    </div>
+
+    <div class="effect-actions">
+      <button onclick="resetEffects()">Reset Defaults</button>
+      <button onclick="hideEffectControls()">Close Panel</button>
+    </div>
+  </div>
+
+  <!-- Info panel -->
+  <!-- <div class="info">
+    <h4>💡 Usage Tips</h4>
+    <p>• <strong>Basic Effect</strong>: Draggable liquid glass</p>
+    <p>• <strong>Custom Effect</strong>: Advanced drag interaction</p>
+    <p>• <strong>Multiple Instances</strong>: Cooperative response effects</p>
+    <p>• <strong>Programmatic Control</strong>: Automatic animation paths</p>
+    <p>• Hover to see deformation effects</p>
+    <p>• Press <kbd>E</kbd> to open advanced effects panel</p>
+    <p>• Press <kbd>P</kbd> to open performance monitor panel</p>
+    <p>• Touch device drag operations supported</p>
+  </div> -->
+
+  <!-- Performance monitor panel -->
+  <div class="performance-monitor" id="performanceMonitor" style="display: none;">
+    <h4>⚡ Performance Monitor</h4>
+    <p>FPS: <span id="fpsCounter">--</span></p>
+    <p>Instance Count: <span id="instanceCount">0</span></p>
+    <p>Drag Status: <span id="dragStatus">None</span></p>
+    <button onclick="togglePerformanceMonitor()"
+      style="margin-top: 15px; padding: 8px 16px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); color: white; border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s ease; backdrop-filter: blur(10px);">Close
+      Monitor</button>
+  </div>
+
+  <!-- Scroll indicator -->
+  <div class="scroll-indicator">
+    Scroll to explore gallery
+  </div>
+
+  <!-- Image Gallery Section -->
+  <section class="image-gallery">
+    <div class="gallery-container">
+      <div class="gallery-title">
+        <h2>Visual Gallery</h2>
+        <p>Discover a curated collection of stunning imagery</p>
+      </div>
+
+      <div class="image-grid">
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=1" alt="Abstract landscape" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Abstract Landscapes</div>
+            <div class="image-description">Explore the beauty of natural formations and abstract compositions that blur
+              the lines between reality and art.</div>
+          </div>
+        </div>
+
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=2" alt="Urban architecture" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Urban Architecture</div>
+            <div class="image-description">Modern cityscapes and architectural marvels showcasing the intersection of
+              design and functionality.</div>
+          </div>
+        </div>
+
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=3" alt="Natural patterns" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Natural Patterns</div>
+            <div class="image-description">Discover the intricate patterns and textures found in nature's own artistic
+              creations.</div>
+          </div>
+        </div>
+
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=4" alt="Minimalist design" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Minimalist Aesthetics</div>
+            <div class="image-description">Clean lines and simplified forms that emphasize the power of restraint in
+              visual design.</div>
+          </div>
+        </div>
+
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=5" alt="Creative composition" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Creative Compositions</div>
+            <div class="image-description">Innovative arrangements and perspectives that challenge conventional visual
+              storytelling.</div>
+          </div>
+        </div>
+
+        <div class="image-item">
+          <img src="https://picsum.photos/800/400?random=6" alt="Artistic expressions" loading="lazy">
+          <div class="image-overlay">
+            <div class="image-title">Artistic expressions</div>
+            <div class="image-description">Dynamic visual narratives that capture the essence of creative storytelling
+              through imagery.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- TypeScript/JavaScript modules -->
+  <script type="module">
+    // Import decoupled architecture core classes and drag utility classes
+    import { LiquidGlassCore } from '../src/core.js';
+    import { LiquidGlassDraggable } from '../src/draggable.js';
+
+    // Global variables
+    window.liquidGlassInstances = [];
+    window.draggableInstances = [];
+
+    // Feature functions
+    window.createBasic = function () {
+      clearAll();
+      const glass = new LiquidGlassCore({
+        position: { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 100 }
+      });
+      glass.init();
+      glass.appendTo(document.body);
+
+      // Add dragging functionality
+      const draggable = new LiquidGlassDraggable(glass, {
+        constrainToViewport: true,
+        onDragStart: (position) => {
+          console.log('Drag started:', position);
+          // CSS classes already handle visual feedback, no need for additional style modifications
+        },
+        onDrag: (position) => {
+          // Can add effects during drag process here
+        },
+        onDragEnd: (position) => {
+          console.log('Drag ended:', position);
+          // CSS classes already handle state restoration, no need for additional style modifications
+        }
+      });
+
+      window.liquidGlassInstances.push(glass);
+      window.draggableInstances.push(draggable);
+    };
+
+    window.createCustom = function () {
+      clearAll();
+      const glass = new LiquidGlassCore({
+        size: { width: 400, height: 250 },
+        position: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 125 },
+        effects: {
+          displacementScale: 1.5,
+          blurAmount: 0.5,
+          saturation: 1.5,
+          chromaticAberration: 0.2,
+          elasticity: 1.2,
+          cornerRadius: 20
+        },
+        style: {
+          borderRadius: "20px",
+          boxShadow: "0 8px 32px rgba(100, 255, 218, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1)",
+          backdropFilter: "blur(0.5px) brightness(1.2) saturate(1.5)",
+          cursor: "grab",
+          zIndex: 9999
+        }
+      });
+      glass.init();
+      glass.appendTo(document.body);
+
+      // Add custom drag behavior
+      const draggable = new LiquidGlassDraggable(glass, {
+        constrainToViewport: false, // Allow dragging outside screen
+        onDragStart: (position) => {
+          // Use CSS classes for visual feedback, avoiding ghosting
+          const container = glass.getContainer();
+          if (container) {
+            container.classList.add('custom-drag-feedback');
+          }
+        },
+        onDrag: (position) => {
+          // Dynamically adjust effects based on position
+          const centerX = window.innerWidth / 2;
+          const centerY = window.innerHeight / 2;
+          const distance = Math.sqrt(
+            Math.pow(position.x - centerX, 2) + Math.pow(position.y - centerY, 2)
+          );
+          const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
+          const influence = Math.min(distance / maxDistance, 1);
+
+          glass.updateEffects({
+            blurAmount: 0.5 + influence * 0.5,
+            saturation: 1.5 - influence * 0.5,
+            chromaticAberration: influence * 0.5
+          });
+        },
+        onDragEnd: (position) => {
+          const container = glass.getContainer();
+          if (container) {
+            container.classList.remove('custom-drag-feedback');
+          }
+
+          // If dragged to screen edge, bounce back to viewport
+          const bounds = glass.getBounds();
+          if (bounds) {
+            const viewportWidth = window.innerWidth;
+            const viewportHeight = window.innerHeight;
+
+            if (bounds.x < 0 || bounds.x + bounds.width > viewportWidth ||
+              bounds.y < 0 || bounds.y + bounds.height > viewportHeight) {
+
+              const constrainedPosition = glass.constrainPosition(position.x, position.y);
+
+              // Add elastic animation
+              const container = glass.getContainer();
+              if (container) {
+                container.style.transition = 'all 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55)';
+                glass.setPosition(constrainedPosition);
+
+                setTimeout(() => {
+                  container.style.transition = '';
+                }, 500);
+              }
+            }
+          }
+        }
+      });
+
+      window.liquidGlassInstances.push(glass);
+      window.draggableInstances.push(draggable);
+    };
+
+    // Performance optimization: throttle function
+    function throttle(func, limit) {
+      let inThrottle;
+      return function () {
+        const args = arguments;
+        const context = this;
+        if (!inThrottle) {
+          func.apply(context, args);
+          inThrottle = true;
+          setTimeout(() => inThrottle = false, limit);
+        }
+      }
+    }
+
+    // Store default effects for each instance
+    window.instanceDefaultEffects = new Map();
+
+    window.createMultiple = function () {
+      clearAll();
+      window.instanceDefaultEffects.clear();
+
+      for (let i = 0; i < 3; i++) {
+        const defaultEffects = {
+          displacementScale: 1.0 + i * 0.3,
+          blurAmount: 0.2 + i * 0.1,
+          saturation: 1.0 + i * 0.2,
+          chromaticAberration: i * 0.1,
+          cornerRadius: 30 + i * 10,
+          elasticity: 1.0 + i * 0.5
+        };
+
+        const glass = new LiquidGlassCore({
+          size: { width: 200 + i * 30, height: 150 + i * 20 },
+          position: { x: 100 + i * 150, y: 100 + i * 80 },
+          effects: defaultEffects,
+          style: {
+            borderRadius: `${30 + i * 10}px`,
+            boxShadow: `0 4px 16px rgba(${100 + i * 50}, ${255 - i * 50}, ${200 + i * 20}, 0.4)`,
+            backdropFilter: `blur(${0.3 + i * 0.2}px) brightness(${1.3 + i * 0.2}) saturate(${1.2 + i * 0.3})`,
+            cursor: "grab",
+            zIndex: 9999 + i
+          }
+        });
+
+        glass.init();
+        glass.appendTo(document.body);
+
+        // Store default effects
+        window.instanceDefaultEffects.set(glass, defaultEffects);
+
+        // Create throttled cooperative effect update function
+        const throttledCooperativeUpdate = throttle((position) => {
+          // Batch calculate all influences
+          const updates = [];
+
+          window.liquidGlassInstances.forEach((otherGlass, otherIndex) => {
+            if (otherGlass !== glass) {
+              const otherPos = otherGlass.getPosition();
+              const distance = Math.sqrt(
+                Math.pow(position.x - otherPos.x, 2) +
+                Math.pow(position.y - otherPos.y, 2)
+              );
+
+              // Only update within influence range
+              const influence = Math.max(0, 1 - distance / 300);
+              if (influence > 0.05) { // Threshold filtering to avoid minor changes
+                const defaultEffects = window.instanceDefaultEffects.get(otherGlass);
+                updates.push({
+                  glass: otherGlass,
+                  effects: {
+                    displacementScale: defaultEffects.displacementScale + influence * 0.5,
+                    blurAmount: defaultEffects.blurAmount + influence * 0.3,
+                    saturation: defaultEffects.saturation + influence * 0.4
+                  }
+                });
+              }
+            }
+          });
+
+          // Batch apply updates
+          updates.forEach(update => {
+            update.glass.updateEffects(update.effects);
+          });
+        }, 16); // About 60fps update frequency
+
+        // Add optimized cooperative drag functionality for each instance
+        const draggable = new LiquidGlassDraggable(glass, {
+          constrainToViewport: true,
+          onDragStart: (position) => {
+            // Use CSS classes for visual feedback, avoiding ghosting
+            const container = glass.getContainer();
+            if (container) {
+              container.classList.add('multi-instance-drag');
+            }
+          },
+          onDrag: throttledCooperativeUpdate,
+          onDragEnd: (position) => {
+            // Restore dragged element's style
+            const container = glass.getContainer();
+            if (container) {
+              container.classList.remove('multi-instance-drag');
+            }
+
+            // Delay restoration of other instances' default effects to avoid abrupt changes
+            setTimeout(() => {
+              window.liquidGlassInstances.forEach((otherGlass) => {
+                if (otherGlass !== glass) {
+                  const defaultEffects = window.instanceDefaultEffects.get(otherGlass);
+                  if (defaultEffects) {
+                    otherGlass.updateEffects(defaultEffects);
+                  }
+                }
+              });
+            }, 300);
+          }
+        });
+
+        window.liquidGlassInstances.push(glass);
+        window.draggableInstances.push(draggable);
+      }
+    };
+
+    // Programmatic position control example
+    window.createProgrammatic = function () {
+      clearAll();
+      const glass = new LiquidGlassCore({
+        size: { width: 180, height: 100 },
+        position: { x: 50, y: 50 },
+        effects: {
+          displacementScale: 1.2,
+          blurAmount: 0.3,
+          saturation: 1.3,
+          chromaticAberration: 0.0,
+          elasticity: 2.0,
+          cornerRadius: 50
+        }
+      });
+
+      glass.init();
+      glass.appendTo(document.body);
+
+      // No drag functionality, completely controlled by program
+      window.liquidGlassInstances.push(glass);
+
+      // Automatic movement animation
+      let angle = 0;
+      const centerX = window.innerWidth / 2 - 90;
+      const centerY = window.innerHeight / 2 - 50;
+      const radius = 100;
+
+      const animate = () => {
+        angle += 0.02;
+        const x = centerX + Math.cos(angle) * radius;
+        const y = centerY + Math.sin(angle) * radius;
+
+        glass.setPosition({ x, y });
+
+        // Dynamically adjust effects based on position
+        const normalizedAngle = (angle % (Math.PI * 2)) / (Math.PI * 2);
+        glass.updateEffects({
+          chromaticAberration: normalizedAngle * 2,
+          cornerRadius: 50 + normalizedAngle * 100,
+          saturation: 1.0 + normalizedAngle * 0.5
+        });
+
+        requestAnimationFrame(animate);
+      };
+
+      animate();
+    };
+
+    window.changeSize = function (size) {
+      const dimensions = {
+        small: { width: 200, height: 120 },
+        medium: { width: 300, height: 200 },
+        large: { width: 450, height: 300 }
+      };
+
+      window.liquidGlassInstances.forEach(glass => {
+        glass.setSize(dimensions[size]);
+      });
+    };
+
+    window.changeTheme = function (theme) {
+      const themes = {
+        glass: {
+          borderRadius: "50px",
+          boxShadow: "0 4px 8px rgba(0, 0, 0, 0.25), 0 -10px 25px inset rgba(0, 0, 0, 0.15), 0 -1px 4px 1px inset rgba(255, 255, 255, 0.74)",
+          backdropFilter: "blur(0.25px) brightness(1.5) saturate(1.1)",
+          cursor: "grab",
+          zIndex: 9999
+        },
+        neon: {
+          borderRadius: "15px",
+          boxShadow: "0 0 30px rgba(64, 255, 218, 0.6), 0 0 60px rgba(64, 255, 218, 0.3)",
+          backdropFilter: "blur(0.5px) brightness(1.8) saturate(2.0) hue-rotate(180deg)",
+          cursor: "grab",
+          zIndex: 9999
+        },
+        fire: {
+          borderRadius: "80px",
+          boxShadow: "0 0 40px rgba(255, 69, 0, 0.8), 0 0 80px rgba(255, 140, 0, 0.4)",
+          backdropFilter: "blur(0.3px) brightness(2.0) saturate(2.5) hue-rotate(30deg)",
+          cursor: "grab",
+          zIndex: 9999
+        },
+        ice: {
+          borderRadius: "100px",
+          boxShadow: "0 0 25px rgba(173, 216, 230, 0.7), 0 0 50px rgba(135, 206, 250, 0.4)",
+          backdropFilter: "blur(0.4px) brightness(1.3) saturate(0.8) hue-rotate(200deg)",
+          cursor: "grab",
+          zIndex: 9999
+        }
+      };
+
+      window.liquidGlassInstances.forEach(glass => {
+        glass.updateConfig({ style: themes[theme] });
+      });
+    };
+
+    window.animatePosition = function () {
+      window.liquidGlassInstances.forEach((glass, index) => {
+        let step = 0;
+        const startX = Math.random() * (window.innerWidth - 300);
+        const startY = Math.random() * (window.innerHeight - 200);
+
+        const animate = () => {
+          if (step < 100) {
+            const progress = step / 100;
+            const x = startX + Math.sin(progress * Math.PI * 4 + index) * 100;
+            const y = startY + Math.cos(progress * Math.PI * 3 + index) * 50;
+            glass.setPosition({ x, y });
+            step++;
+            requestAnimationFrame(animate);
+          }
+        };
+
+        setTimeout(() => animate(), index * 200);
+      });
+    };
+
+    window.animateSize = function () {
+      window.liquidGlassInstances.forEach((glass, index) => {
+        let step = 0;
+        const baseWidth = 250;
+        const baseHeight = 180;
+
+        const animate = () => {
+          if (step < 120) {
+            const progress = step / 120;
+            const scale = 1 + Math.sin(progress * Math.PI * 2) * 0.3;
+            glass.setSize({
+              width: baseWidth * scale,
+              height: baseHeight * scale
+            });
+            step++;
+            requestAnimationFrame(animate);
+          } else {
+            glass.setSize({ width: baseWidth, height: baseHeight });
+          }
+        };
+
+        setTimeout(() => animate(), index * 300);
+      });
+    };
+
+    window.clearAll = function () {
+      // Destroy all draggable instances
+      window.draggableInstances.forEach(draggable => draggable.destroy());
+      window.draggableInstances = [];
+
+      // Destroy all liquid glass instances
+      window.liquidGlassInstances.forEach(glass => glass.destroy());
+      window.liquidGlassInstances = [];
+
+      // Clean up performance optimization related data
+      if (window.instanceDefaultEffects) {
+        window.instanceDefaultEffects.clear();
+      }
+    };
+
+    // Effect control related functions
+    window.showEffectControls = function () {
+      document.getElementById('effectsPanel').style.display = 'block';
+    };
+
+    window.hideEffectControls = function () {
+      document.getElementById('effectsPanel').style.display = 'none';
+    };
+
+    window.updateEffect = function (effectName, value) {
+      const numValue = parseFloat(value);
+
+      // Update display value
+      document.getElementById(effectName + 'Value').textContent = value;
+
+      // Update effects for all instances
+      window.liquidGlassInstances.forEach(glass => {
+        const effects = {};
+        effects[effectName] = numValue;
+        glass.updateEffects(effects);
+      });
+    };
+
+    window.resetEffects = function () {
+      const defaultEffects = {
+        displacementScale: 1.0,
+        blurAmount: 0.25,
+        saturation: 1.1,
+        chromaticAberration: 0.0,
+        elasticity: 1.0,
+        cornerRadius: 150
+      };
+
+      // Reset slider values
+      Object.keys(defaultEffects).forEach(key => {
+        const slider = document.getElementById(key);
+        const valueSpan = document.getElementById(key + 'Value');
+        if (slider && valueSpan) {
+          slider.value = defaultEffects[key];
+          valueSpan.textContent = defaultEffects[key];
+        }
+      });
+
+      // Update all instances
+      window.liquidGlassInstances.forEach(glass => {
+        glass.updateEffects(defaultEffects);
+      });
+    };
+
+    // Performance monitoring related
+    let performanceMonitorVisible = false;
+    let fpsCounter = 0;
+    let lastFpsTime = performance.now();
+    let frameCount = 0;
+
+    function updatePerformanceMonitor() {
+      if (!performanceMonitorVisible) return;
+
+      frameCount++;
+      const now = performance.now();
+
+      if (now - lastFpsTime >= 1000) {
+        fpsCounter = Math.round((frameCount * 1000) / (now - lastFpsTime));
+        frameCount = 0;
+        lastFpsTime = now;
+
+        document.getElementById('fpsCounter').textContent = fpsCounter;
+      }
+
+      document.getElementById('instanceCount').textContent = window.liquidGlassInstances.length;
+
+      const draggingCount = window.draggableInstances.filter(d => d.isDragginActive && d.isDragginActive()).length;
+      document.getElementById('dragStatus').textContent = draggingCount > 0 ? `${draggingCount} dragging` : 'None';
+
+      requestAnimationFrame(updatePerformanceMonitor);
+    }
+
+    window.togglePerformanceMonitor = function () {
+      const monitor = document.getElementById('performanceMonitor');
+      performanceMonitorVisible = !performanceMonitorVisible;
+
+      if (performanceMonitorVisible) {
+        monitor.style.display = 'block';
+        updatePerformanceMonitor();
+      } else {
+        monitor.style.display = 'none';
+      }
+    };
+
+    // Add keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      // Skip if modifier keys are pressed (handled by control panel shortcuts)
+      if (e.ctrlKey || e.metaKey) return;
+
+      if (e.key === 'Escape') {
+        hideEffectControls();
+      } else if (e.key === 'e' || e.key === 'E') {
+        const panel = document.getElementById('effectsPanel');
+        if (panel.style.display === 'none' || !panel.style.display) {
+          showEffectControls();
+        } else {
+          hideEffectControls();
+        }
+      } else if (e.key === 'p' || e.key === 'P') {
+        togglePerformanceMonitor();
+      }
+    });
+
+    // Scroll indicator functionality
+    function handleScrollIndicator() {
+      const scrollIndicator = document.querySelector('.scroll-indicator');
+      const imageGallery = document.querySelector('.image-gallery');
+
+      if (!scrollIndicator || !imageGallery) return;
+
+      const handleScroll = () => {
+        const scrollY = window.scrollY;
+        const viewportHeight = window.innerHeight;
+
+        // Hide indicator when user starts scrolling or reaches gallery
+        if (scrollY > viewportHeight * 0.1) {
+          scrollIndicator.style.opacity = '0';
+          scrollIndicator.style.pointerEvents = 'none';
+        } else {
+          scrollIndicator.style.opacity = '1';
+          scrollIndicator.style.pointerEvents = 'auto';
+        }
+      };
+
+      // Smooth scroll to gallery when indicator is clicked
+      scrollIndicator.addEventListener('click', () => {
+        imageGallery.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start'
+        });
+      });
+
+      window.addEventListener('scroll', handleScroll);
+      handleScroll(); // Initial call
+    }
+
+    // Enhanced image loading with error handling and retry mechanism
+    function enhanceImageLoading() {
+      const images = document.querySelectorAll('.image-item img');
+
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            const imageItem = img.closest('.image-item');
+
+            loadImageWithRetry(img, imageItem);
+            observer.unobserve(img);
+          }
+        });
+      }, {
+        rootMargin: '50px', // Start loading before image comes into view
+        threshold: 0.1
+      });
+
+      images.forEach((img, index) => {
+        const imageItem = img.closest('.image-item');
+
+        // Add loading state
+        imageItem.style.opacity = '0';
+        imageItem.style.transform = 'translateY(20px)';
+        imageItem.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+
+        // Add loading indicator
+        addLoadingIndicator(imageItem);
+
+        // Ensure unique image URLs by adding timestamp and index
+        const originalSrc = img.src;
+        const uniqueSrc = `${originalSrc}&t=${Date.now()}&i=${index}`;
+        img.dataset.src = uniqueSrc;
+        img.removeAttribute('src'); // Remove src to prevent immediate loading
+
+        imageObserver.observe(img);
+      });
+    }
+
+    // Add loading indicator to image item
+    function addLoadingIndicator(imageItem) {
+      const loadingDiv = document.createElement('div');
+      loadingDiv.className = 'image-loading';
+      loadingDiv.innerHTML = `
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading...</div>
+      `;
+      imageItem.appendChild(loadingDiv);
+    }
+
+    // Load image with retry mechanism
+    function loadImageWithRetry(img, imageItem, retryCount = 0) {
+      const maxRetries = 3;
+      const src = img.dataset.src;
+
+      const newImg = new Image();
+
+      newImg.onload = function () {
+        img.src = src;
+        imageItem.style.opacity = '1';
+        imageItem.style.transform = 'translateY(0)';
+
+        // Remove loading indicator
+        const loadingIndicator = imageItem.querySelector('.image-loading');
+        if (loadingIndicator) {
+          loadingIndicator.remove();
+        }
+      };
+
+      newImg.onerror = function () {
+        if (retryCount < maxRetries) {
+          console.log(`Retrying image load (${retryCount + 1}/${maxRetries}):`, src);
+          setTimeout(() => {
+            loadImageWithRetry(img, imageItem, retryCount + 1);
+          }, 1000 * (retryCount + 1)); // Exponential backoff
+        } else {
+          console.error('Failed to load image after', maxRetries, 'attempts:', src);
+          showImageError(imageItem, src);
+        }
+      };
+
+      // Set a timeout for loading
+      setTimeout(() => {
+        if (!newImg.complete) {
+          newImg.src = ''; // Cancel loading
+          if (retryCount < maxRetries) {
+            loadImageWithRetry(img, imageItem, retryCount + 1);
+          }
+        }
+      }, 10000); // 10 second timeout
+
+      newImg.src = src;
+    }
+
+    // Show error state for failed images
+    function showImageError(imageItem, src) {
+      const loadingIndicator = imageItem.querySelector('.image-loading');
+      if (loadingIndicator) {
+        loadingIndicator.innerHTML = `
+          <div class="error-icon">⚠️</div>
+          <div class="error-text">Failed to load image</div>
+          <button class="retry-btn" onclick="retryImageLoad(this, '${src}')">Retry</button>
+        `;
+        loadingIndicator.className = 'image-error';
+      }
+    }
+
+    // Retry failed image loading
+    window.retryImageLoad = function (button, src) {
+      const imageItem = button.closest('.image-item');
+      const img = imageItem.querySelector('img');
+
+      // Reset to loading state
+      const errorDiv = imageItem.querySelector('.image-error');
+      if (errorDiv) {
+        errorDiv.className = 'image-loading';
+        errorDiv.innerHTML = `
+          <div class="loading-spinner"></div>
+          <div class="loading-text">Retrying...</div>
+        `;
+      }
+
+      // Retry loading
+      img.dataset.src = src;
+      loadImageWithRetry(img, imageItem);
+    };
+
+    // Control panel minimize/maximize functionality
+    let isControlPanelMinimized = false;
+
+    window.toggleControlPanel = function () {
+      const controlPanel = document.getElementById('controlPanel');
+      const minimizeIcon = document.getElementById('minimizeIcon');
+
+      if (!controlPanel || !minimizeIcon) return;
+
+      isControlPanelMinimized = !isControlPanelMinimized;
+
+      if (isControlPanelMinimized) {
+        controlPanel.classList.add('minimized');
+        minimizeIcon.textContent = '+';
+        minimizeIcon.parentElement.title = 'Maximize Control Panel';
+      } else {
+        controlPanel.classList.remove('minimized');
+        minimizeIcon.textContent = '−';
+        minimizeIcon.parentElement.title = 'Minimize Control Panel';
+      }
+    };
+
+    // Add keyboard shortcut for control panel toggle
+    function addControlPanelShortcuts() {
+      document.addEventListener('keydown', (e) => {
+        // Toggle control panel with Ctrl/Cmd + M
+        if ((e.ctrlKey || e.metaKey) && e.key === 'm') {
+          e.preventDefault();
+          toggleControlPanel();
+        }
+      });
+    }
+
+    // Initially create a basic instance
+    document.addEventListener('DOMContentLoaded', () => {
+      setTimeout(() => {
+        createBasic();
+      }, 1000);
+
+      // Initialize image gallery features
+      handleScrollIndicator();
+      enhanceImageLoading();
+
+      // Initialize control panel features
+      addControlPanelShortcuts();
+    });
+  </script>
+</body>
+
+</html>
