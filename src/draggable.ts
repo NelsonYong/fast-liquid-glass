@@ -81,8 +81,8 @@ export class LiquidGlassDraggable {
     this.isDragging = true;
     this.container.style.cursor = 'grabbing';
 
-    // 添加拖拽状态的CSS类，避免直接修改样式导致的重影
-    this.container.classList.add('liquid-glass-dragging');
+    // 保持原始样式，不添加任何CSS类
+    // this.container.classList.add('liquid-glass-dragging');
 
     const currentPosition = this.target.getPosition();
     this.dragStart = {
@@ -121,8 +121,8 @@ export class LiquidGlassDraggable {
     this.isDragging = false;
     this.container.style.cursor = 'grab';
 
-    // 移除拖拽状态的CSS类
-    this.container.classList.remove('liquid-glass-dragging');
+    // 保持原始样式，不移除任何CSS类（因为没有添加）
+    // this.container.classList.remove('liquid-glass-dragging');
 
     const finalPosition = this.target.getPosition();
     this.config.onDragEnd?.(finalPosition);

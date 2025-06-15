@@ -7,7 +7,6 @@ export {
   type LiquidGlassStyleConfig,
   type LiquidGlassSVGConfig,
   type LiquidGlassEffectConfig,
-  type TextureResult,
   type MouseState
 } from './core';
 

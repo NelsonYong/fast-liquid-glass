@@ -660,7 +660,7 @@
       font-weight: 600;
     }
 
-    /* Drag state styles - fixing ghost/duplicated effects */
+    /* Drag state styles - 保持原始样式，仅优化性能 */
     .liquid-glass-dragging {
       /* Use will-change to hint browser optimization for rendering */
       will-change: transform, opacity;
@@ -668,11 +668,11 @@
       /* Create new stacking context to avoid backdrop-filter ghosting */
       isolation: isolate;
 
-      /* Subtle visual feedback, avoiding excessive transforms */
-      filter: brightness(1.1) !important;
+      /* 移除视觉反馈，保持原始外观 */
+      /* filter: brightness(1.1) !important; */
 
-      /* Ensure smooth transition during drag */
-      transition: filter 0.1s ease-out !important;
+      /* 移除过渡效果，避免样式变化 */
+      /* transition: filter 0.1s ease-out !important; */
     }
 
     /* Prevent selection and context menu during drag */
@@ -681,23 +681,25 @@
       pointer-events: none !important;
     }
 
-    /* Custom drag feedback styles */
+    /* Custom drag feedback styles - 保持原始样式 */
     .custom-drag-feedback {
       will-change: transform, filter;
       isolation: isolate;
-      transform: scale(1.03) !important;
-      filter: brightness(1.15) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) !important;
-      transition: transform 0.15s ease-out, filter 0.15s ease-out !important;
+      /* 移除缩放和滤镜效果，保持原始外观 */
+      /* transform: scale(1.03) !important; */
+      /* filter: brightness(1.15) drop-shadow(0 8px 16px rgba(0, 0, 0, 0.3)) !important; */
+      /* transition: transform 0.15s ease-out, filter 0.15s ease-out !important; */
     }
 
-    /* Multi-instance drag feedback styles */
+    /* Multi-instance drag feedback styles - 保持原始样式 */
     .multi-instance-drag {
       will-change: transform, filter;
       isolation: isolate;
-      transform: scale(1.01) !important;
-      filter: brightness(1.08) !important;
-      z-index: 10000 !important;
-      transition: transform 0.1s ease-out, filter 0.1s ease-out !important;
+      /* 移除缩放、滤镜和层级变化，保持原始外观 */
+      /* transform: scale(1.01) !important; */
+      /* filter: brightness(1.08) !important; */
+      /* z-index: 10000 !important; */
+      /* transition: transform 0.1s ease-out, filter 0.1s ease-out !important; */
     }
 
     /* Liquid glass container base optimization */
@@ -988,9 +990,9 @@
       <div class="control-group">
         <label>Preset Effects</label>
         <button class="primary" onclick="createBasic()">Basic Effect</button>
-        <button onclick="createCustom()">Custom Effect</button>
-        <button onclick="createMultiple()">Multiple Instances</button>
-        <button onclick="createProgrammatic()">Programmatic Control</button>
+        <!-- <button onclick="createCustom()">Custom Effect</button>
+        <button onclick="createMultiple()">Multiple Instances</button> -->
+        <!-- <button onclick="createProgrammatic()">Programmatic Control</button> -->
       </div>
 
       <div class="control-group">
@@ -1031,12 +1033,12 @@
   <div class="effects-panel" id="effectsPanel">
     <h3>🎚️ Advanced Effect Controls</h3>
 
-    <div class="effect-control">
+    <!-- <div class="effect-control">
       <label>Displacement Intensity (Displacement Scale)</label>
       <input type="range" id="displacementScale" min="0.1" max="5.0" step="0.1" value="1.0"
         oninput="updateEffect('displacementScale', this.value)">
       <span id="displacementScaleValue">1.0</span>
-    </div>
+    </div> -->
 
     <div class="effect-control">
       <label>Blur Amount (Blur Amount)</label>
@@ -1068,9 +1070,9 @@
 
     <div class="effect-control">
       <label>Corner Radius (Corner Radius)</label>
-      <input type="range" id="cornerRadius" min="0" max="200" step="5" value="150"
+      <input type="range" id="cornerRadius" min="0" max="200" step="5" value="50"
         oninput="updateEffect('cornerRadius', this.value)">
-      <span id="cornerRadiusValue">150</span>
+      <span id="cornerRadiusValue">50</span>
     </div>
 
     <div class="effect-actions">
@@ -1188,24 +1190,40 @@
     window.createBasic = function () {
       clearAll();
       const glass = new LiquidGlassCore({
-        position: { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 100 }
+        position: { x: window.innerWidth / 2 - 150, y: window.innerHeight / 2 - 100 },
       });
       glass.init();
       glass.appendTo(document.body);
+      console.log("glass.container", glass.container);
+      const content = document.createElement('div');
+      content.innerHTML = 'Hello, world!';
+      content.style.position = 'absolute';
+      content.style.top = '50%';
+      content.style.left = '50%';
+      content.style.transform = 'translate(-50%, -50%)';
+      content.style.color = 'white';
+      content.style.fontSize = '24px';
+      content.style.fontWeight = 'bold';
+      content.style.textAlign = 'center';
+      content.style.zIndex = '10000';
+      content.style.pointerEvents = 'none';
+      // 文字加阴影
+      content.style.textShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+      glass.container.appendChild(content);
 
       // Add dragging functionality
       const draggable = new LiquidGlassDraggable(glass, {
         constrainToViewport: true,
         onDragStart: (position) => {
           console.log('Drag started:', position);
-          // CSS classes already handle visual feedback, no need for additional style modifications
+          // 保持原始样式，不添加任何视觉效果
         },
         onDrag: (position) => {
-          // Can add effects during drag process here
+          // 保持原始样式，不修改任何效果
         },
         onDragEnd: (position) => {
           console.log('Drag ended:', position);
-          // CSS classes already handle state restoration, no need for additional style modifications
+          // 保持原始样式，不修改任何效果
         }
       });
 
@@ -1220,7 +1238,7 @@
         position: { x: window.innerWidth / 2 - 200, y: window.innerHeight / 2 - 125 },
         effects: {
           displacementScale: 1.5,
-          blurAmount: 0.5,
+          blurAmount: 0.75,
           saturation: 1.5,
           chromaticAberration: 0.2,
           elasticity: 1.2,
@@ -1237,38 +1255,17 @@
       glass.init();
       glass.appendTo(document.body);
 
+
       // Add custom drag behavior
       const draggable = new LiquidGlassDraggable(glass, {
         constrainToViewport: false, // Allow dragging outside screen
         onDragStart: (position) => {
-          // Use CSS classes for visual feedback, avoiding ghosting
-          const container = glass.getContainer();
-          if (container) {
-            container.classList.add('custom-drag-feedback');
-          }
+          // 保持原始样式，不添加任何视觉效果
         },
         onDrag: (position) => {
-          // Dynamically adjust effects based on position
-          const centerX = window.innerWidth / 2;
-          const centerY = window.innerHeight / 2;
-          const distance = Math.sqrt(
-            Math.pow(position.x - centerX, 2) + Math.pow(position.y - centerY, 2)
-          );
-          const maxDistance = Math.sqrt(centerX * centerX + centerY * centerY);
-          const influence = Math.min(distance / maxDistance, 1);
-
-          glass.updateEffects({
-            blurAmount: 0.5 + influence * 0.5,
-            saturation: 1.5 - influence * 0.5,
-            chromaticAberration: influence * 0.5
-          });
+          // 保持原始样式和效果，不进行动态调整
         },
         onDragEnd: (position) => {
-          const container = glass.getContainer();
-          if (container) {
-            container.classList.remove('custom-drag-feedback');
-          }
-
           // If dragged to screen edge, bounce back to viewport
           const bounds = glass.getBounds();
           if (bounds) {
@@ -1388,31 +1385,13 @@
         const draggable = new LiquidGlassDraggable(glass, {
           constrainToViewport: true,
           onDragStart: (position) => {
-            // Use CSS classes for visual feedback, avoiding ghosting
-            const container = glass.getContainer();
-            if (container) {
-              container.classList.add('multi-instance-drag');
-            }
+            // 保持原始样式，不添加任何视觉效果
           },
-          onDrag: throttledCooperativeUpdate,
+          onDrag: (position) => {
+            // 保持原始样式，不进行协作效果更新
+          },
           onDragEnd: (position) => {
-            // Restore dragged element's style
-            const container = glass.getContainer();
-            if (container) {
-              container.classList.remove('multi-instance-drag');
-            }
-
-            // Delay restoration of other instances' default effects to avoid abrupt changes
-            setTimeout(() => {
-              window.liquidGlassInstances.forEach((otherGlass) => {
-                if (otherGlass !== glass) {
-                  const defaultEffects = window.instanceDefaultEffects.get(otherGlass);
-                  if (defaultEffects) {
-                    otherGlass.updateEffects(defaultEffects);
-                  }
-                }
-              });
-            }, 300);
+            // 保持原始样式，不修改任何效果
           }
         });
 
@@ -1429,7 +1408,7 @@
         position: { x: 50, y: 50 },
         effects: {
           displacementScale: 1.2,
-          blurAmount: 0.3,
+          blurAmount: 0.65,
           saturation: 1.3,
           chromaticAberration: 0.0,
           elasticity: 2.0,
@@ -1606,11 +1585,11 @@
     window.resetEffects = function () {
       const defaultEffects = {
         displacementScale: 1.0,
-        blurAmount: 0.25,
+        blurAmount: 0.65,
         saturation: 1.1,
         chromaticAberration: 0.0,
         elasticity: 1.0,
-        cornerRadius: 150
+        cornerRadius: 50
       };
 
       // Reset slider values
