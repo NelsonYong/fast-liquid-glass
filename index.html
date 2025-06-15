@@ -24,11 +24,6 @@
   <meta property="twitter:image:alt" content="Liquid Glass Interactive Visual Effects Demo">
   <meta name="twitter:creator" content="@liquidglass">
   <meta name="twitter:site" content="@liquidglass">
-
-  <!-- Preconnect for Performance -->
-  <link rel="preconnect" href="https://picsum.photos">
-  <link rel="dns-prefetch" href="https://picsum.photos">
-
   <!-- Geo Tags -->
   <meta name="geo.region" content="US">
   <meta name="geo.placename" content="United States">
@@ -37,8 +32,6 @@
 
 
   <!-- Security -->
-  <meta http-equiv="Content-Security-Policy"
-    content="default-src 'self'; img-src 'self' https://picsum.photos; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';">
   <meta http-equiv="X-Content-Type-Options" content="nosniff">
   <meta http-equiv="X-Frame-Options" content="DENY">
   <meta http-equiv="X-XSS-Protection" content="1; mode=block">
@@ -1184,8 +1177,8 @@
   <!-- TypeScript/JavaScript modules -->
   <script type="module">
     // Import decoupled architecture core classes and drag utility classes
-    import { LiquidGlassCore } from './src/core.js';
-    import { LiquidGlassDraggable } from './src/draggable.js';
+    import { LiquidGlassCore } from './src/core';
+    import { LiquidGlassDraggable } from './src/draggable';
 
     // Global variables
     window.liquidGlassInstances = [];

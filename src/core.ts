@@ -18,6 +18,8 @@ export interface LiquidGlassSVGConfig {
 
 export interface LiquidGlassStyleConfig {
   borderRadius: string;
+  border?: string;
+  borderImage?: string;
   boxShadow: string;
   backdropFilter: string;
   cursor: string;
@@ -91,10 +93,13 @@ const DEFAULT_CONFIG: Required<LiquidGlassConfig> = {
   constrainToViewport: true,
   style: {
     borderRadius: '150px',
+    // 玻璃边框效果 - 使用更轻微的阴影模拟玻璃边缘，不影响透明度
     boxShadow: `
-      0 4px 8px rgba(0, 0, 0, 0.25),
-      0 -10px 25px inset rgba(0, 0, 0, 0.15),
-      0 -1px 4px 1px inset rgba(255, 255, 255, 0.74)
+      0 0 0 1px rgba(255, 255, 255, 0.2),
+      0 0 0 2px rgba(255, 255, 255, 0.1),
+      inset 0 1px 1px rgba(255, 255, 255, 0.3),
+      inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+      0 2px 4px rgba(0, 0, 0, 0.1)
     `,
     backdropFilter: 'blur(0.25px) brightness(1.5) saturate(1.1)',
     cursor: 'grab',
@@ -198,6 +203,8 @@ export class LiquidGlassCore {
       height: ${size.height}px;
       overflow: hidden;
       border-radius: ${effects.cornerRadius}px;
+      ${style.border ? `border: ${style.border};` : ''}
+      ${style.borderImage ? `border-image: ${style.borderImage};` : ''}
       box-shadow: ${style.boxShadow};
       cursor: ${style.cursor};
       backdrop-filter: ${backdropFilter};
@@ -210,6 +217,9 @@ export class LiquidGlassCore {
 
     // 添加液体玻璃标识类
     this.container.classList.add('liquid-glass-container');
+
+    // 添加玻璃边框效果的样式表
+    this.injectGlassBorderStyles();
   }
 
   private createSVGFilter(): void {
@@ -264,6 +274,44 @@ export class LiquidGlassCore {
     this.canvas.style.display = 'none';
 
     this.context = this.canvas.getContext('2d')!;
+  }
+
+  private injectGlassBorderStyles(): void {
+    // 检查是否已经注入过样式
+    if (!document.querySelector('#liquid-glass-border-styles')) {
+      const style = document.createElement('style');
+      style.id = 'liquid-glass-border-styles';
+      style.textContent = `
+        .liquid-glass-container {
+          position: relative;
+        }
+        
+        .liquid-glass-container::before {
+          content: '';
+          position: absolute;
+          top: -2px;
+          left: -2px;
+          right: -2px;
+          bottom: -2px;
+          border-radius: inherit;
+          z-index: -2;
+          pointer-events: none;
+        }
+        
+        .liquid-glass-container::after {
+          content: '';
+          position: absolute;
+          top: -1px;
+          left: -1px;
+          right: -1px;
+          bottom: -1px;
+          border-radius: inherit;
+          z-index: -1;
+          pointer-events: none;
+        }
+      `;
+      document.head.appendChild(style);
+    }
   }
 
   public constrainPosition(x: number, y: number): LiquidGlassPosition {
@@ -344,6 +392,19 @@ export class LiquidGlassCore {
     }
 
     this.lastShaderUpdate = now;
+    this.performShaderUpdate();
+  }
+
+  private forceUpdateShader(): void {
+    if (!this.context || !this.canvas || !this.feImage || !this.feDisplacementMap) return;
+
+    // 强制更新，绕过节流机制
+    this.lastShaderUpdate = performance.now();
+    this.performShaderUpdate();
+  }
+
+  private performShaderUpdate(): void {
+    if (!this.context || !this.canvas || !this.feImage || !this.feDisplacementMap) return;
 
     const mouseProxy = new Proxy(this.mouse, {
       get: (target, prop) => {
@@ -515,8 +576,8 @@ export class LiquidGlassCore {
       this.container.style.transition = `all ${0.3 / currentEffects.elasticity}s cubic-bezier(0.175, 0.885, 0.32, 1.275)`;
     }
 
-    // 更新着色器
-    this.updateShader();
+    // 强制更新着色器，绕过节流机制
+    this.forceUpdateShader();
   }
 
   public destroy(): void {
@@ -539,6 +600,15 @@ export class LiquidGlassCore {
 
     // Remove event listeners
     window.removeEventListener('resize', this.handleResize);
+
+    // 清理注入的样式（如果没有其他实例在使用）
+    const existingContainers = document.querySelectorAll('.liquid-glass-container');
+    if (existingContainers.length === 0) {
+      const styleElement = document.querySelector('#liquid-glass-border-styles');
+      if (styleElement) {
+        styleElement.remove();
+      }
+    }
   }
 
   // Static utility functions for external use
