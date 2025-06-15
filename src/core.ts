@@ -93,12 +93,11 @@ const DEFAULT_CONFIG: Required<LiquidGlassConfig> = {
   constrainToViewport: true,
   style: {
     borderRadius: '150px',
-    // 玻璃边框效果 - 使用更轻微的阴影模拟玻璃边缘，不影响透明度
+    // 玻璃边框效果 - 1px清晰边框，无外层发光
     boxShadow: `
-      0 0 0 1px rgba(255, 255, 255, 0.2),
-      0 0 0 2px rgba(255, 255, 255, 0.1),
-      inset 0 1px 1px rgba(255, 255, 255, 0.3),
-      inset 0 -1px 1px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(255, 255, 255, 0.3),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+      inset 0 0 3px 1px rgba(255, 255, 255, 0.15),
       0 2px 4px rgba(0, 0, 0, 0.1)
     `,
     backdropFilter: 'blur(0.25px) brightness(1.5) saturate(1.1)',
