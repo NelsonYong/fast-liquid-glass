@@ -55,10 +55,10 @@
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
       background: #000000;
-      background-image:
+      /* background-image:
         radial-gradient(ellipse 80% 50% at 50% -20%, rgba(120, 119, 198, 0.3), transparent),
         radial-gradient(ellipse 80% 70% at 90% 40%, rgba(204, 171, 238, 0.15), transparent),
-        radial-gradient(ellipse 100% 60% at 70% 30%, rgba(148, 163, 184, 0.1), transparent);
+        radial-gradient(ellipse 100% 60% at 70% 30%, rgba(148, 163, 184, 0.1), transparent); */
       min-height: 100vh;
       overflow-x: hidden;
     }
@@ -1047,7 +1047,7 @@
 
     <div class="effect-control">
       <label>Blur Amount (Blur Amount)</label>
-      <input type="range" id="blurAmount" min="0.1" max="3.0" step="0.1" value="0.25"
+      <input type="range" id="blurAmount" min="0.1" max="5.0" step="0.1" value="0.25"
         oninput="updateEffect('blurAmount', this.value)">
       <span id="blurAmountValue">0.25</span>
     </div>
@@ -1125,7 +1125,7 @@
 
       <div class="image-grid">
         <div class="image-item">
-          <img src="https://picsum.photos/800/400?random=1" alt="Abstract landscape" loading="lazy">
+          <img src="/292-800x400.jpg" alt="Abstract landscape">
           <div class="image-overlay">
             <div class="image-title">Abstract Landscapes</div>
             <div class="image-description">Explore the beauty of natural formations and abstract compositions that blur
@@ -1134,7 +1134,7 @@
         </div>
 
         <div class="image-item">
-          <img src="https://picsum.photos/800/400?random=2" alt="Urban architecture" loading="lazy">
+          <img src="/465-800x400.jpg" alt="Urban architecture">
           <div class="image-overlay">
             <div class="image-title">Urban Architecture</div>
             <div class="image-description">Modern cityscapes and architectural marvels showcasing the intersection of
@@ -1143,7 +1143,7 @@
         </div>
 
         <div class="image-item">
-          <img src="https://picsum.photos/800/400?random=3" alt="Natural patterns" loading="lazy">
+          <img src="/676-800x400.jpg" alt="Natural patterns">
           <div class="image-overlay">
             <div class="image-title">Natural Patterns</div>
             <div class="image-description">Discover the intricate patterns and textures found in nature's own artistic
@@ -1152,7 +1152,7 @@
         </div>
 
         <div class="image-item">
-          <img src="https://picsum.photos/800/400?random=4" alt="Minimalist design" loading="lazy">
+          <img src="/701-800x400.jpg" alt="Minimalist design">
           <div class="image-overlay">
             <div class="image-title">Minimalist Aesthetics</div>
             <div class="image-description">Clean lines and simplified forms that emphasize the power of restraint in
@@ -1161,7 +1161,7 @@
         </div>
 
         <div class="image-item">
-          <img src="https://picsum.photos/800/400?random=5" alt="Creative composition" loading="lazy">
+          <img src="/807-800x400.jpg" alt="Creative composition">
           <div class="image-overlay">
             <div class="image-title">Creative Compositions</div>
             <div class="image-description">Innovative arrangements and perspectives that challenge conventional visual
@@ -1169,14 +1169,14 @@
           </div>
         </div>
 
-        <div class="image-item">
+        <!-- <div class="image-item">
           <img src="https://picsum.photos/800/400?random=6" alt="Artistic expressions" loading="lazy">
           <div class="image-overlay">
             <div class="image-title">Artistic expressions</div>
             <div class="image-description">Dynamic visual narratives that capture the essence of creative storytelling
               through imagery.</div>
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </section>
@@ -1732,21 +1732,6 @@
     function enhanceImageLoading() {
       const images = document.querySelectorAll('.image-item img');
 
-      const imageObserver = new IntersectionObserver((entries, observer) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            const img = entry.target;
-            const imageItem = img.closest('.image-item');
-
-            loadImageWithRetry(img, imageItem);
-            observer.unobserve(img);
-          }
-        });
-      }, {
-        rootMargin: '50px', // Start loading before image comes into view
-        threshold: 0.1
-      });
-
       images.forEach((img, index) => {
         const imageItem = img.closest('.image-item');
 
@@ -1758,13 +1743,8 @@
         // Add loading indicator
         addLoadingIndicator(imageItem);
 
-        // Ensure unique image URLs by adding timestamp and index
-        const originalSrc = img.src;
-        const uniqueSrc = `${originalSrc}&t=${Date.now()}&i=${index}`;
-        img.dataset.src = uniqueSrc;
-        img.removeAttribute('src'); // Remove src to prevent immediate loading
-
-        imageObserver.observe(img);
+        // Load image immediately (no lazy loading)
+        loadImageWithRetry(img, imageItem);
       });
     }
 
@@ -1782,12 +1762,12 @@
     // Load image with retry mechanism
     function loadImageWithRetry(img, imageItem, retryCount = 0) {
       const maxRetries = 3;
-      const src = img.dataset.src;
+      const src = img.src; // Use the original src directly
 
       const newImg = new Image();
 
       newImg.onload = function () {
-        img.src = src;
+        // Image loaded successfully
         imageItem.style.opacity = '1';
         imageItem.style.transform = 'translateY(0)';
 
@@ -1852,7 +1832,7 @@
       }
 
       // Retry loading
-      img.dataset.src = src;
+      img.src = src;
       loadImageWithRetry(img, imageItem);
     };
 
