@@ -22,6 +22,7 @@ export interface LiquidGlassStyleConfig {
   borderImage?: string;
   boxShadow: string;
   backdropFilter: string;
+  backgroundColor: string;
   cursor: string;
   zIndex: number;
 }
@@ -102,6 +103,7 @@ const DEFAULT_CONFIG: Required<LiquidGlassConfig> = {
     `,
     backdropFilter: 'blur(0.25px) brightness(1.5) saturate(1.1)',
     cursor: 'grab',
+    backgroundColor: 'transparent',
     zIndex: 9999
   },
   svg: {
@@ -112,7 +114,7 @@ const DEFAULT_CONFIG: Required<LiquidGlassConfig> = {
   },
   effects: {
     displacementScale: 1.0,
-    blurAmount: 0.25,
+    blurAmount: 2.0,
     saturation: 1.1,
     chromaticAberration: 0.0,
     elasticity: 1.0,
@@ -207,6 +209,7 @@ export class LiquidGlassCore {
       box-shadow: ${style.boxShadow};
       cursor: ${style.cursor};
       backdrop-filter: ${backdropFilter};
+      background-color: ${style.backgroundColor};
       z-index: ${style.zIndex};
       pointer-events: auto;
       transition: all ${0.3 / effects.elasticity}s cubic-bezier(0.175, 0.885, 0.32, 1.275);
